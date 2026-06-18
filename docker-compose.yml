@@ -1,0 +1,66 @@
+# Infra for local dev: one postgres (durable store) and three redis nodes
+# (the distributed cache). The redis nodes are independent servers — they do
+# NOT form a Redis Cluster. Sharding across them is done in app code by a
+# consistent-hash ring, which is the whole point of the assignment.
+#
+#   docker compose up -d      # start infra
+#   npm run dev:server        # app runs natively against it
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ta_postgres
+    environment:
+      POSTGRES_USER: typeahead
+      POSTGRES_PASSWORD: typeahead
+      POSTGRES_DB: typeahead
+    # host port is overridable (PG_HOST_PORT in .env) for machines that already
+    # have something on 5433; keep PG_PORT in sync so the app connects to it.
+    ports:
+      - "${PG_HOST_PORT:-5433}:5432"
+    volumes:
+      - ta_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U typeahead"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  # --- cache shard A ---
+  redis-a:
+    image: redis:7-alpine
+    container_name: ta_redis_a
+    # volatile-lru: only TTL'd keys (the suggestion cache) are evictable under
+    # memory pressure. the WAL list and trending zset carry no TTL, so they
+    # survive — and appendonly makes them crash-safe.
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
+    ports:
+      - "7070:6379"
+    volumes:
+      - ta_redis_a:/data
+
+  # --- cache shard B ---
+  redis-b:
+    image: redis:7-alpine
+    container_name: ta_redis_b
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
+    ports:
+      - "7071:6379"
+    volumes:
+      - ta_redis_b:/data
+
+  # --- cache shard C ---
+  redis-c:
+    image: redis:7-alpine
+    container_name: ta_redis_c
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
+    ports:
+      - "7072:6379"
+    volumes:
+      - ta_redis_c:/data
+
+volumes:
+  ta_pg:
+  ta_redis_a:
+  ta_redis_b:
+  ta_redis_c:

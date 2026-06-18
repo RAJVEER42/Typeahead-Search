@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+*.log
+
+# editor / os
+.DS_Store
+.vscode/
+.idea/
+
+# datasets are downloaded/generated locally, not committed
+apps/server/data/*.tsv
+apps/server/data/*.txt
+!apps/server/data/.gitkeep

@@ -1,0 +1,23 @@
+{
+  "name": "typeahead-search",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Low-latency search typeahead: trie serving, distributed Redis cache (consistent hashing), write-behind batching, recency-aware trending.",
+  "workspaces": [
+    "apps/server",
+    "apps/web"
+  ],
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:reset": "docker compose down -v",
+    "load": "npm run load -w apps/server",
+    "bench": "npm run bench -w apps/server",
+    "dev:server": "npm run dev -w apps/server",
+    "dev:web": "npm run dev -w apps/web",
+    "test": "npm run test -w apps/server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
