@@ -13,9 +13,9 @@ A low-latency search-typeahead system: it suggests popular queries as you type, 
 
 The design thesis in one line: **keystrokes are reads, reads must be cheap, and writes can wait.** So suggestions are served by an in-memory trie behind a two-layer cache, and search submissions are batched to the database instead of written one-by-one.
 
-| Suggestions (prefix-highlighted, live cache routing) | Trending + live metrics |
+| The console — consistent-hash ring, live gauges, trending | Suggestions, prefix-highlighted, with the live route |
 | --- | --- |
-| ![suggestions](docs/screenshots/suggestions.png) | ![overview](docs/screenshots/overview.png) |
+| ![console](docs/screenshots/console.png) | ![suggestions](docs/screenshots/suggest.png) |
 
 ---
 
@@ -144,6 +144,19 @@ Each Redis node is placed at 160 positions ("virtual nodes") around a 2³² ring
 
 ---
 
+## Interface
+
+The web UI (Vite + React + TypeScript) is a **search console** that makes the backend legible — every keystroke shows where it was served from. The design language is deliberately Swiss/print: warm paper, black ink, one spot color (international orange), a grotesk face, thick rules and hard corners, no gloss.
+
+- **Consistent-hash ring** (`RingViz`, canvas): the three shards sit on a 2³² ring with ownership arcs sized live from `/cache/ring`. Each `/suggest` fires a tracer to the shard that answered — an **L1 hit** pulses the centre hex instead (served before the ring), a **trie fallback** fires a dashed tracer plus a `TRIE FALLBACK` chip. Shard identity is one fixed triad — `:7070` ink, `:7071` orange, `:7072` blue — across the ring, legend, source badge, and shard strip.
+- **Live gauges** (polled from `/metrics`, refreshed on every submit): effective cache **hit-rate** dial, **p95 latency** sparkline with a budget line, **write-reduction** factor, and a **WAL-depth** meter.
+- **Shard status** strip + a terminal-style **source badge** (`REDIS :7071 · 0.412 ms` / `L1 IN-PROCESS` / `TRIE :7072`).
+- Debounced suggestions, full keyboard navigation, a Popularity ↔ Trending mode rocker, graceful `—` / "telemetry offline" states (never NaN or spinners), reduced-motion fallbacks, and a shareable `?q=` deep link.
+
+The search itself works with no canvas — the ring and gauges are progressive enhancement over a plain, keyboard-navigable typeahead.
+
+---
+
 ## Quickstart
 
 Requirements: Docker + Node 20+.
@@ -241,8 +254,8 @@ apps/
       routes/             suggest · search · trending · metrics · cache · health
       config.ts  types.ts  context.ts  app.ts  index.ts
     scripts/              loadDataset.ts · benchmark.ts
-  web/                    Vite + React + TS UI
-    src/components/       SearchPanel · ModeToggle · SourceBadge · MetricsBar · TrendingPanel
+  web/                    Vite + React + TS console
+    src/components/       SearchPanel · RingViz · Gauges · ShardStatus · SourceBadge · ModeToggle · TrendingPanel
     src/lib/              api.ts · hooks.ts
 docs/                     DESIGN.md · PERFORMANCE.md · screenshots/
 docker-compose.yml        postgres + 3 redis shards
