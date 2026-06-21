@@ -73,3 +73,15 @@ export async function fetchMetrics(): Promise<Metrics | null> {
     return null;
   }
 }
+
+// key distribution across the shards — drives the ring's ownership arcs.
+export type RingDistribution = Record<string, number>;
+
+export async function fetchRing(sample = 5000): Promise<RingDistribution> {
+  try {
+    const r = await fetch(`${BASE}/cache/ring?sample=${sample}`);
+    return (await r.json()).distribution ?? {};
+  } catch {
+    return {};
+  }
+}
