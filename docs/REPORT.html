@@ -1,0 +1,281 @@
+<style>
+  @page { size: A4; margin: 16mm 15mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #1a1a17;
+    background: #f4f1ea;
+    font-size: 10pt;
+    line-height: 1.6;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .ink { color: #1a1a17; }
+  .muted { color: #75716a; }
+
+  header.cover { border-bottom: 3px solid #1a1a17; padding-bottom: 14px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .sq { width: 13px; height: 13px; background: #ff4d00; }
+  .brand span { font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; font-size: 9pt; }
+  h1 { font-size: 23pt; margin: 8px 0 4px; letter-spacing: -0.01em; }
+  .subtitle { font-size: 11pt; color: #4a473f; margin: 0 0 12px; max-width: 92%; }
+  .meta { font-size: 8.2pt; color: #75716a; display: flex; flex-wrap: wrap; gap: 16px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .meta b { color: #1a1a17; }
+
+  h2 {
+    font-size: 12.5pt; text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1.5px solid #1a1a17; padding-bottom: 5px; margin: 26px 0 12px;
+    break-after: avoid; display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 .n { color: #ff4d00; font-size: 11pt; }
+  h3 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.07em; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 7px 0; }
+  ul { margin: 7px 0; padding-left: 18px; }
+  li { margin: 4px 0; }
+  b { font-weight: 700; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 8.7pt; background: #e6e0d2; padding: 1px 4px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 8.7pt; }
+  thead { display: table-header-group; } /* repeat header if a table breaks across pages */
+  tr { break-inside: avoid; }
+  th, td { border: 1px solid #cdc7b8; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #1a1a17; color: #f4f1ea; text-transform: uppercase; letter-spacing: 0.05em; font-size: 7.6pt; }
+  tr:nth-child(even) td { background: #ece8dd; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  pre { background: #1a1a17; color: #f4f1ea; padding: 11px 13px; font-size: 8pt; font-family: ui-monospace, Menlo, monospace; white-space: pre-wrap; break-inside: avoid; margin: 10px 0; line-height: 1.45; }
+  figure { margin: 14px 0; break-inside: avoid; text-align: center; }
+  figure img { width: 86%; border: 1.5px solid #1a1a17; display: inline-block; }
+  figcaption { font-size: 8pt; color: #75716a; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 6px; text-align: left; }
+  .callout { border-left: 3px solid #ff4d00; background: #ece8dd; padding: 9px 13px; margin: 12px 0; font-size: 9pt; break-inside: avoid; }
+  .footer { border-top: 1.5px solid #1a1a17; margin-top: 24px; padding-top: 9px; font-size: 7.6pt; color: #75716a; text-transform: uppercase; letter-spacing: 0.07em; text-align: center; }
+  svg { width: 100%; height: auto; border: 1.5px solid #1a1a17; background: #fbf9f3; break-inside: avoid; }
+
+  .highlights { display: grid; grid-template-columns: repeat(4, 1fr); border: 1.5px solid #1a1a17; margin: 18px 0; break-inside: avoid; }
+  .highlights > div { padding: 12px 14px; border-right: 1px solid #cdc7b8; }
+  .highlights > div:last-child { border-right: 0; }
+  .big { font-size: 18pt; font-weight: 800; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big.o { color: #ff4d00; }
+  .big small { font-size: 10pt; color: #75716a; font-weight: 700; }
+  .lbl { display: block; font-size: 7.2pt; text-transform: uppercase; letter-spacing: 0.07em; color: #75716a; margin-top: 5px; }
+  .contents { font-size: 8.4pt; text-transform: uppercase; letter-spacing: 0.05em; color: #75716a; }
+  .contents b { color: #1a1a17; letter-spacing: 0.1em; }
+</style>
+
+<header class="cover">
+  <div class="brand"><span class="sq"></span><span>Typeahead &middot; Search Engine</span></div>
+  <h1>Project Report</h1>
+  <p class="subtitle">A low-latency search typeahead: trie serving, a distributed Redis cache with consistent hashing, write-behind batching, and recency-aware trending.</p>
+  <div class="meta">
+    <span>Author <b>RAJVEER42</b></span>
+    <span>Stack <b>TypeScript &middot; Fastify &middot; Redis &middot; PostgreSQL &middot; React</b></span>
+    <span>Repo <b>github.com/RAJVEER42/Typeahead-Search</b></span>
+  </div>
+</header>
+
+<p>The system suggests popular queries as the user types, records each submitted search, and keeps a live trending list. The idea behind it is simple. Almost everything that happens in a search box is a read (one per keystroke), so reads have to be cheap, while writes can wait a little. Suggestions come from an in-memory trie that sits behind a two layer cache, and submitted searches are batched into the database instead of being written one at a time. The database is never touched while serving suggestions.</p>
+
+<div class="highlights">
+  <div><span class="big o">0.003<small>ms</small></span><span class="lbl">suggest p95 (server)</span></div>
+  <div><span class="big">99.4<small>%</small></span><span class="lbl">cache hit rate</span></div>
+  <div><span class="big">~23&times;</span><span class="lbl">write reduction</span></div>
+  <div><span class="big">0</span><span class="lbl">db reads on read path</span></div>
+</div>
+
+<p class="contents"><b>Contents</b> &nbsp;&nbsp; 01 &nbsp;System architecture &nbsp;&middot;&nbsp; 02 &nbsp;Dataset and loading &nbsp;&middot;&nbsp; 03 &nbsp;API documentation &nbsp;&middot;&nbsp; 04 &nbsp;Design choices and trade-offs &nbsp;&middot;&nbsp; 05 &nbsp;Performance report</p>
+
+<!-- 1 -->
+<h2><span class="n">01</span> System architecture</h2>
+
+<svg viewBox="0 0 820 360" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1a1a17"/></marker>
+    <marker id="ao" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#ff4d00"/></marker>
+    <marker id="ag" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#75716a"/></marker>
+  </defs>
+
+  <!-- boxes -->
+  <rect x="20" y="116" width="108" height="120" fill="#fff" stroke="#1a1a17" stroke-width="1.5"/>
+  <text x="74" y="164" text-anchor="middle" font-size="12" font-weight="700">React</text>
+  <text x="74" y="180" text-anchor="middle" font-size="12" font-weight="700">console</text>
+  <text x="74" y="200" text-anchor="middle" font-size="8" fill="#75716a">debounced UI</text>
+
+  <rect x="200" y="92" width="150" height="52" fill="#fff" stroke="#1a1a17" stroke-width="1.5"/>
+  <text x="275" y="114" text-anchor="middle" font-size="11" font-weight="700">L1 cache</text>
+  <text x="275" y="130" text-anchor="middle" font-size="8" fill="#75716a">in-process, TTL 1.5s</text>
+
+  <rect x="420" y="84" width="160" height="130" fill="#fff" stroke="#1a1a17" stroke-width="1.5"/>
+  <text x="500" y="104" text-anchor="middle" font-size="11" font-weight="700">Redis ring</text>
+  <text x="500" y="118" text-anchor="middle" font-size="7.5" fill="#75716a">consistent hashing, 160 vnodes</text>
+  <circle cx="452" cy="146" r="8" fill="#1a1a17"/><text x="470" y="150" font-size="8.5" fill="#1a1a17">:7070</text>
+  <circle cx="452" cy="170" r="8" fill="#ff4d00"/><text x="470" y="174" font-size="8.5" fill="#1a1a17">:7071</text>
+  <circle cx="452" cy="194" r="8" fill="#2b4fe0"/><text x="470" y="198" font-size="8.5" fill="#1a1a17">:7072</text>
+  <text x="500" y="206" text-anchor="middle" font-size="7.5" fill="#75716a">cache &middot; WAL &middot; trending</text>
+
+  <rect x="640" y="92" width="160" height="52" fill="#fff" stroke="#1a1a17" stroke-width="1.5"/>
+  <text x="720" y="114" text-anchor="middle" font-size="11" font-weight="700">Completion trie</text>
+  <text x="720" y="130" text-anchor="middle" font-size="8" fill="#75716a">cached top-K per node</text>
+
+  <path d="M640,252 a80,9 0 0,1 160,0 v52 a80,9 0 0,1 -160,0 z" fill="#fff" stroke="#1a1a17" stroke-width="1.5"/>
+  <path d="M640,252 a80,9 0 0,0 160,0" fill="none" stroke="#1a1a17" stroke-width="1.5"/>
+  <text x="720" y="290" text-anchor="middle" font-size="11" font-weight="700">PostgreSQL</text>
+  <text x="720" y="304" text-anchor="middle" font-size="7.5" fill="#75716a">durable counts</text>
+
+  <rect x="200" y="250" width="150" height="52" fill="#fff" stroke="#1a1a17" stroke-width="1.5"/>
+  <text x="275" y="272" text-anchor="middle" font-size="11" font-weight="700">Write buffer</text>
+  <text x="275" y="288" text-anchor="middle" font-size="8" fill="#75716a">write-behind, WAL</text>
+
+  <!-- read path (ink). labels sit in the gaps between boxes, above the line -->
+  <path d="M128,118 H200" fill="none" stroke="#1a1a17" stroke-width="1.4" marker-end="url(#ah)"/>
+  <text x="164" y="110" text-anchor="middle" font-size="8.5" font-weight="700">GET /suggest</text>
+  <path d="M350,118 H420" fill="none" stroke="#1a1a17" stroke-width="1.4" marker-end="url(#ah)"/>
+  <text x="385" y="110" text-anchor="middle" font-size="8" fill="#1a1a17">L1 miss</text>
+  <path d="M580,118 H640" fill="none" stroke="#1a1a17" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#ah)"/>
+  <text x="610" y="110" text-anchor="middle" font-size="8" fill="#1a1a17">on miss</text>
+
+  <!-- write path (orange) -->
+  <path d="M128,224 V276 H200" fill="none" stroke="#ff4d00" stroke-width="1.4" marker-end="url(#ao)"/>
+  <text x="166" y="266" text-anchor="middle" font-size="8.5" font-weight="700" fill="#ff4d00">POST /search</text>
+  <path d="M350,276 H500 V214" fill="none" stroke="#ff4d00" stroke-width="1.4" marker-end="url(#ao)"/>
+  <text x="405" y="267" text-anchor="middle" font-size="8" fill="#ff4d00">RPUSH, ZINCRBY</text>
+  <path d="M350,292 C480,332 560,318 638,300" fill="none" stroke="#ff4d00" stroke-width="1.4" marker-end="url(#ao)"/>
+  <text x="478" y="336" text-anchor="middle" font-size="8" fill="#ff4d00">drain, then UPSERT</text>
+
+  <!-- lifecycle (dotted) -->
+  <path d="M748,252 V146" fill="none" stroke="#75716a" stroke-width="1.3" stroke-dasharray="2 3" marker-end="url(#ag)"/>
+  <text x="754" y="202" font-size="8" fill="#75716a">boot: build</text>
+</svg>
+<p class="muted" style="font-size:8pt;text-transform:uppercase;letter-spacing:0.06em;">Ink shows the read path, orange the write path, dotted the boot-time build. The app tier holds no state, so it scales out behind a load balancer.</p>
+
+<h3>Components</h3>
+<ul>
+  <li><b>Completion trie.</b> Every node keeps its own pre-sorted list of the best completions, so a lookup is O(prefix length): walk to the node and read the list. There is no subtree scan and no database query. Counts only ever go up, so keeping the lists current is just an insertion sort over a small array (about 25 entries) on the few nodes along a query's path.</li>
+  <li><b>Two layer cache.</b> A small in-process L1 with a short TTL catches the hottest prefixes and keeps one hot key from hammering a single shard. Behind it, L2 is a set of independent Redis nodes. It is not Redis Cluster; the routing lives in the application.</li>
+  <li><b>Consistent-hash ring.</b> Each Redis node is placed at 160 virtual positions around a 2^32 ring, and a key belongs to the first node clockwise from it. Adding or removing a node moves only about one Nth of the keys, not all of them.</li>
+  <li><b>Write-behind buffer.</b> Searches are appended to a durable Redis list (a write-ahead log). A background drainer folds duplicates together and flushes the batch to Postgres, the trie, and the trending set, either every second or as soon as the list crosses the batch size.</li>
+  <li><b>PostgreSQL.</b> The durable source of truth. It is loaded into the trie at boot and is never read while serving suggestions.</li>
+</ul>
+
+<h3>Read path, GET /suggest</h3>
+<p>Normalise the prefix, check L1 for a microsecond hit, and on a miss route the key through the ring to the Redis shard that owns it. If Redis misses, or that node happens to be down, the trie answers and the cache is refilled with a slightly randomised TTL. Every response says where it came from (l1, redis, or trie) and which shard, so the path is easy to watch. No database reads happen here.</p>
+
+<h3>Write path, POST /search</h3>
+<p>The query is appended to the Redis log and the request returns straight away with <code>{ "message": "Searched" }</code>. The drainer runs every second, or sooner if the log passes the batch size, folds repeated queries together (fifty searches for "iphone" become a single increment of fifty), and applies the batch once to Postgres (an additive upsert that ages recency in SQL), to the trie, and to the trending set. It finishes processing a batch before trimming it, which gives at-least-once delivery.</p>
+
+<!-- 2 -->
+<h2><span class="n">02</span> Dataset and loading</h2>
+<p>The loader works with a generated dataset or with any real one. The shape it expects is <code>query, count</code>, and counts can be produced by aggregating raw logs.</p>
+<h3>Synthetic (default)</h3>
+<p>A seeded generator produces <b>120,000 distinct queries</b> whose counts follow a power law (Zipf), the same long-tailed shape that real query logs have. That shape is what makes caching and ranking worth doing. Common first words are shared (<code>iphone</code>, <code>how to</code>, and so on) so prefixes overlap the way they do in practice.</p>
+<pre>npm run load                 # 120k synthetic queries, Zipf counts, loaded by COPY in about 0.5s</pre>
+<h3>Real corpus</h3>
+<p>Point the loader at a file. Lines of <code>query&lt;TAB&gt;count</code> are used directly, while a file with one raw query per line is aggregated into counts. Good sources include the AOL 2006 query logs, product title lists, or any keyword export.</p>
+<pre>npm run load -w apps/server -- --file data/queries.tsv     # "query&lt;TAB&gt;count" per line
+npm run load -w apps/server -- --file data/raw_queries.txt # one query per line, aggregated</pre>
+<p>Loading uses Postgres <code>COPY ... FROM STDIN</code> and replaces the table each time. At boot the server rebuilds the trie from the table, which takes about 0.8 seconds for 120,000 rows.</p>
+
+<!-- 3 -->
+<h2><span class="n">03</span> API documentation</h2>
+<table>
+  <thead><tr><th>Method, path</th><th>Purpose</th><th>Response</th></tr></thead>
+  <tbody>
+    <tr><td><code>GET /suggest?q=&lt;prefix&gt;&amp;mode=count|recency</code></td><td>top 10 prefix matches (mode defaults to count; unknown values fall back gracefully)</td><td><code>{ prefix, mode, source, node, suggestions:[{query,count}], tookMs }</code></td></tr>
+    <tr><td><code>POST /search</code> <code>{ "query": "..." }</code></td><td>record a search (write-behind)</td><td><code>{ "message": "Searched", "query": "..." }</code></td></tr>
+    <tr><td><code>GET /trending?n=10</code></td><td>decaying leaderboard (recency)</td><td><code>{ trending:[{query,score}] }</code></td></tr>
+    <tr><td><code>GET /cache/debug?prefix=&lt;p&gt;&amp;mode=</code></td><td>which shard owns a prefix, and hit or miss</td><td><code>{ ownerNode, keyHash, ringPosition, cached, status }</code></td></tr>
+    <tr><td><code>GET /cache/ring?sample=5000</code></td><td>key distribution across shards</td><td><code>{ nodes, distribution }</code></td></tr>
+    <tr><td><code>GET /metrics</code></td><td>hit rate, p50, p95, p99, write reduction, WAL depth</td><td><code>MetricsSnapshot</code></td></tr>
+    <tr><td><code>GET /health</code></td><td>liveness and indexed query count</td><td><code>{ status, trieSize }</code></td></tr>
+  </tbody>
+</table>
+<h3>Examples</h3>
+<pre>curl 'localhost:8080/suggest?q=ip'
+curl -X POST localhost:8080/search -H 'content-type: application/json' -d '{"query":"iphone"}'
+curl 'localhost:8080/cache/debug?prefix=iphone'   # returns { ownerNode:"localhost:7072", status:"MISS", ... }
+curl 'localhost:8080/metrics'</pre>
+<p>Input is handled gently. An empty or missing <code>q</code> returns an empty result, mixed case is lower-cased, a prefix with no matches returns <code>[]</code> with HTTP 200, and an unknown <code>mode</code> falls back to count instead of returning an error.</p>
+
+<!-- 4 -->
+<h2><span class="n">04</span> Design choices and trade-offs</h2>
+<table>
+  <thead><tr><th>Decision</th><th>Chosen</th><th>Rejected</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Serving</td><td>trie with a cached top-K per node</td><td><code>LIKE</code> query, or a DFS per request</td><td>O(prefix length), no database on reads</td></tr>
+    <tr><td>Ranking</td><td>count, or log popularity plus decayed recency</td><td>linear count only</td><td>recency without ranking a spike forever</td></tr>
+    <tr><td>Cache layers</td><td>in-process L1 plus Redis L2</td><td>Redis only</td><td>removes hot-key and network cost on hot prefixes</td></tr>
+    <tr><td>Cache strategy</td><td>cache-aside, write-around, jittered TTL</td><td>write-through or active invalidation</td><td>fewer writes; a few seconds of staleness is fine</td></tr>
+    <tr><td>Sharding</td><td>consistent hashing, 160 vnodes, in app</td><td><code>hash % N</code>, or Redis Cluster</td><td>scaling moves few keys; routing is the exercise</td></tr>
+    <tr><td>Hash</td><td>MurmurHash3 over UTF-8 bytes</td><td>MD5, or <code>charCodeAt &amp; 0xff</code></td><td>fast, and correct for non-ASCII text</td></tr>
+    <tr><td>Node failure</td><td>fall back to the trie</td><td>return 500</td><td>availability over strict cache consistency</td></tr>
+    <tr><td>Writes</td><td>write-behind, durable log, coalesce</td><td>sync per request, or in-memory buffer</td><td>about 1,000 times fewer transactions; survives restart</td></tr>
+    <tr><td>Delivery</td><td>at-least-once (process, then trim)</td><td>at-most-once, or exactly-once</td><td>never drop; a rare double count is acceptable</td></tr>
+  </tbody>
+</table>
+
+<h3>Ranking, count versus recency</h3>
+<p><code>mode=count</code> ranks by all-time popularity, which is the baseline. <code>mode=recency</code> blends that with recent activity using <code>score = w_pop &middot; log1p(count) + w_rec &middot; recent</code>, where the <code>recent</code> term is aged down over time on a 30 minute half-life. The <code>log1p</code> keeps a hugely popular query from swamping the recency term, and the half-life is what stops a one hour spike from ranking forever. Re-ranking only touches the small list of about 25 candidates, never the whole tree.</p>
+
+<h3>Failure behaviour for batching</h3>
+<p>If the process crashes before a flush, the un-flushed batch is still in the Redis log and the next drain handles it. Because the drainer finishes a batch before trimming it, a crash in the middle of a flush replays that batch, which double counts a few searches rather than losing them. Approximate popularity counts can live with the occasional double. The log is a single routed node, so it is a single point of failure for writes. That is accepted here for simplicity and could be sharded later.</p>
+
+<div class="callout"><b>Consistency.</b> It is eventual, on purpose (PACELC: PA/EL). A submitted search shows up in suggestions and trending after the next flush, about a second, and a cached prefix can be stale up to its TTL. That is right for a typeahead and wrong for a bank ledger.</div>
+
+<h3>Known limits</h3>
+<ul>
+  <li>A single very hot prefix still lands on one shard. L1 hides most of that load; a proper fix is hot-key replication.</li>
+  <li>A crash in the middle of a flush can double count a little. This is accepted.</li>
+  <li>The trie is unbounded, so memory is the ceiling past roughly a million distinct queries. It would then need to be capped by depth.</li>
+  <li>Metrics are per process and reset on restart, which is fine for a demo. A production setup would aggregate them with something like Prometheus.</li>
+</ul>
+
+<!-- 5 -->
+<h2><span class="n">05</span> Performance report</h2>
+<p>Every figure here comes from <code>npm run bench</code> against a running server (Apple Silicon, macOS, with Postgres and three Redis shards in Docker and the app on Node 20). The shape of the results is the point. Absolute throughput depends on the machine, but the numbers are real and repeatable. Settings: <code>TOP_K=10</code>, <code>CACHE_VNODES=160</code>, <code>BATCH_SIZE_N=2000</code>, <code>FLUSH_INTERVAL_MS=1000</code>, <code>TTL_SUGGEST=45</code>, L1 TTL 1.5s.</p>
+<table>
+  <thead><tr><th>Metric</th><th>Result</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Suggest latency, server, in process</td><td class="num">p50 0.001, p95 0.003, p99 0.006 ms</td><td>the actual cost of answering (an L1 lookup or a trie walk)</td></tr>
+    <tr><td>Suggest latency, client, localhost HTTP</td><td class="num">p50 2.1, p95 6.5, p99 20 ms</td><td>mostly HTTP, JSON, and fetch overhead</td></tr>
+    <tr><td>Effective cache hit rate</td><td class="num">about 99.4%</td><td>L1 and Redis together; L1 served about 8,000 of 8,045 reads</td></tr>
+    <tr><td>Database reads on the suggestion path</td><td class="num">0</td><td>by design, the trie answers misses</td></tr>
+    <tr><td>Write reduction</td><td class="num">20,000 searches to about 860 rows</td><td>about 23 times fewer rows, about 1,000 times fewer transactions</td></tr>
+    <tr><td>Consistent-hash distribution, 3 shards</td><td class="num">33.6, 32.3, 34.2 %</td><td>within about 2% of even, with 160 vnodes</td></tr>
+    <tr><td>Trie build at boot</td><td class="num">about 0.8 s</td><td>120,000 queries, loaded from Postgres</td></tr>
+  </tbody>
+</table>
+
+<h3>Cache hit rate, reading both layers together</h3>
+<p>The in-process L1 served about 8,000 of the repeated reads, so Redis only saw the cold misses. Taken on its own the Redis-only hit rate looks low, because it counts only what slipped past L1. The figure that matters is the combined rate across both layers, about 99.4%. That is the intended behaviour. L1 shields each shard from the hottest prefixes, which cuts latency and takes hot-key pressure off any single node.</p>
+
+<h3>Recency versus count, shown with data</h3>
+<p>The long-tail query <code>redis cluster sharding</code> does not appear in the top results for the prefix <code>red</code> by all-time count. After a burst of recent searches it moves to rank 1 under <code>mode=recency</code>, then settles back over the next few half-lives. That is the difference between the two ranking modes, demonstrated with live data rather than a hand-drawn example.</p>
+
+<h3>Graceful degradation when a shard fails</h3>
+<p>With one Redis shard killed during traffic, <code>/suggest</code> kept returning 200s, served from the trie or L1, while <code>/metrics</code> counted the caught <code>cacheErrors</code>. Nothing returned a 500. The only visible effect was a short dip in the hit rate for the prefixes that shard owned.</p>
+
+<pre>=== suggest latency (8000 reads) ===   server p50 0.001  p95 0.003  p99 0.006 ms
+effective hit rate 99.4%  (l1 8002, redis 2, trie/miss 47)   db reads on suggest path: 0
+=== write reduction (20000 searches) ===   20000 searches, 860 rows in 20 batches  (~23x rows, ~1000x txns)
+=== consistent-hash distribution (5000 keys) ===   :7070 33.6%   :7071 32.3%   :7072 34.2%
+=== recency vs count ===   "redis cluster sharding": by count not in top, by recency rank 1</pre>
+
+<!-- 6 -->
+<h2><span class="n">06</span> Running it locally</h2>
+<p>Requirements are Docker and Node 20 or newer. The app tier runs natively against infrastructure in Docker, in two terminals.</p>
+<pre>docker compose up -d          # postgres and three redis shards
+npm install                   # installs both workspaces
+npm run load                  # loads 120k synthetic queries (or pass --file for a real dataset)
+npm run dev:server            # API on http://localhost:8080
+npm run dev:web               # UI on http://localhost:5173  (second terminal)
+
+npm test                      # unit tests: trie, ranking, hash ring, write buffer, metrics
+npm run bench                 # reproduces the performance numbers above</pre>
+<p>The repository is a small monorepo. <code>apps/server</code> holds the Fastify API, the libraries (trie, ranking, hash ring, cache, write buffer, trending, metrics, store) and the loader and benchmark scripts. <code>apps/web</code> holds the React console. <code>docs</code> holds this report along with the design notes, the performance notes, and the screenshots. The full setup guide, the API reference, and the longer design write-up live in the repository README and the <code>docs</code> folder.</p>
+
+<figure>
+  <img src="screenshots/console.png" alt="the web console"/>
+  <figcaption>The web console makes the path visible: the live consistent-hash ring, the cache hit-rate dial, the p95 latency sparkline, write reduction, WAL depth, the trending board, and per-shard status.</figcaption>
+</figure>
+
+<div class="footer">Typeahead Search &middot; Project Report &middot; github.com/RAJVEER42/Typeahead-Search &middot; reads are served from cache, then trie, never the database</div>
