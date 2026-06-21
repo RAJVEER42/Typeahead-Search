@@ -1,15 +1,14 @@
-// The search box. Debounced suggestions, one in-flight request at a time
+// The command bar. Debounced suggestions, one in-flight request at a time
 // (older ones aborted), keyboard navigation, prefix highlighting, and a dummy
-// submit that feeds the write path. This is where every backend feature shows
-// up to the user.
+// submit that feeds the write path. Each response is reported up via onRoute so
+// the ring can fire its tracer to the shard that answered.
 
 import { useEffect, useRef, useState } from "react";
 import { fetchSuggest, postSearch, type Mode, type SuggestResponse } from "../lib/api";
 import { useDebouncedValue } from "../lib/hooks";
 import { SourceBadge } from "./SourceBadge";
 
-// split a suggestion into its matched prefix head and the remaining tail, so
-// the typed part can be highlighted.
+// split a suggestion into its matched prefix head and the remaining tail.
 function highlight(query: string, prefix: string) {
   if (!prefix || !query.startsWith(prefix)) return <>{query}</>;
   return (
@@ -26,14 +25,15 @@ export function SearchPanel({
   seedTick,
   initialText = "",
   onActivity,
+  onRoute,
 }: {
   mode: Mode;
   seed: string;
   seedTick: number;
   initialText?: string;
   onActivity: () => void;
+  onRoute: (resp: SuggestResponse) => void;
 }) {
-  // initial text can come from a ?q= deep link, so a search is shareable.
   const [text, setText] = useState(initialText);
   const [resp, setResp] = useState<SuggestResponse | null>(null);
   const [active, setActive] = useState(-1);
@@ -42,11 +42,9 @@ export function SearchPanel({
 
   const debounced = useDebouncedValue(text, 120);
   const abortRef = useRef<AbortController | null>(null);
-  const submittedRef = useRef(false); // skip the next fetch after a submit/seed
+  const submittedRef = useRef(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
-  // a picked trending entry fills the box without reopening the dropdown. keyed
-  // on seedTick so re-picking the same query still refills.
   useEffect(() => {
     if (seed) {
       setText(seed);
@@ -55,7 +53,6 @@ export function SearchPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedTick]);
 
-  // fetch suggestions when the debounced text or mode changes.
   useEffect(() => {
     const q = debounced.trim();
     if (!q) {
@@ -67,7 +64,7 @@ export function SearchPanel({
       submittedRef.current = false;
       return;
     }
-    abortRef.current?.abort(); // cancel the previous in-flight request
+    abortRef.current?.abort();
     const ac = new AbortController();
     abortRef.current = ac;
     fetchSuggest(q, mode, ac.signal)
@@ -76,6 +73,7 @@ export function SearchPanel({
         setOpen(r.suggestions.length > 0);
         setActive(-1);
         setError(null);
+        onRoute(r); // tell the ring which shard answered
       })
       .catch((e: unknown) => {
         if ((e as Error).name !== "AbortError") {
@@ -83,9 +81,9 @@ export function SearchPanel({
           setOpen(false);
         }
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced, mode]);
 
-  // close the dropdown on an outside click.
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
@@ -97,12 +95,12 @@ export function SearchPanel({
   const submit = (q: string): void => {
     const query = q.trim();
     if (!query) return;
-    void postSearch(query); // dummy submit -> write-behind buffer
+    void postSearch(query);
     setText(query);
     submittedRef.current = true;
     setOpen(false);
     setActive(-1);
-    onActivity(); // refresh metrics + trending now
+    onActivity();
   };
 
   const onKeyDown = (e: React.KeyboardEvent): void => {
@@ -125,8 +123,8 @@ export function SearchPanel({
   return (
     <section className="search" ref={boxRef}>
       <div className="search-row">
-        <div className="input-wrap">
-          <svg className="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+        <div className="cmd">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
             <path
               d="M21 21l-4.3-4.3M11 18a7 7 0 110-14 7 7 0 010 14z"
               fill="none"
@@ -166,12 +164,12 @@ export function SearchPanel({
               className={i === active ? "active" : ""}
               onMouseEnter={() => setActive(i)}
               onMouseDown={(e) => {
-                e.preventDefault(); // keep focus; fire before blur closes us
+                e.preventDefault();
                 submit(s.query);
               }}
             >
               <span className="opt-query">{highlight(s.query, resp.prefix)}</span>
-              <span className="opt-count">{s.count.toLocaleString()}</span>
+              <span className="opt-count num">{s.count.toLocaleString()}</span>
             </li>
           ))}
         </ul>
