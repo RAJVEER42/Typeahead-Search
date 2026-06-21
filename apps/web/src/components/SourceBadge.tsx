@@ -1,32 +1,28 @@
-// Renders where the last suggestion response came from — the live view of the
-// cache path (L1 -> redis -> trie) and which shard answered.
+// Terminal-style status line docked in the command bar: where the last
+// response was served from, which shard, and how long it took. Shard identity
+// (color + port) matches the ring and the legend everywhere.
 
 import type { Source } from "../lib/api";
 
-const LABELS: Record<Source, string> = {
-  l1: "L1 in-process",
-  redis: "Redis",
-  trie: "Trie (cache miss)",
-  empty: "",
-};
-
-export function SourceBadge({
-  source,
-  node,
-  tookMs,
-}: {
-  source: Source;
-  node?: string;
-  tookMs?: number;
-}) {
+export function SourceBadge({ source, node, tookMs }: { source: Source; node?: string; tookMs?: number }) {
   if (source === "empty") return null;
   const port = node?.split(":")[1];
+
+  let cls = "is-l1";
+  let label = "L1 IN-PROCESS";
+  if (source === "redis") {
+    cls = `is-${port}`;
+    label = `REDIS :${port}`;
+  } else if (source === "trie") {
+    cls = "is-trie";
+    label = `TRIE :${port}`;
+  }
+
   return (
-    <div className={`badge badge-${source}`}>
-      <span className="badge-dot" />
-      {LABELS[source]}
-      {source !== "l1" && port && <span className="badge-node">shard :{port}</span>}
-      {typeof tookMs === "number" && <span className="badge-took">{tookMs.toFixed(3)} ms</span>}
-    </div>
+    <span className={`badge ${cls}`}>
+      <span className="route-dot" />
+      {label}
+      {typeof tookMs === "number" && <span className="took">{tookMs.toFixed(3)} ms</span>}
+    </span>
   );
 }
